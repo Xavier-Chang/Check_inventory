@@ -1,0 +1,13 @@
+# fly.toml app configuration file generated for apps-fragrant-smoke-4431
+
+app = "apps-fragrant-smoke-4431"
+primary_region = "ams"
+
+[deploy]
+  # 指定啟動命令，運行您的 Python 腳本
+  command = "python loewe_stock_checker.py"
+
+[[vm]]
+  memory = "1gb"
+  cpu_kind = "shared"
+  cpus = 1

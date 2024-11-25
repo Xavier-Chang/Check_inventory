@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: loewe-stock-checker
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python loewe_stock_checker.py"
+    envVars:
+      - key: SENDER_EMAIL
+        fromSecret: SENDER_EMAIL
+      - key: SENDER_PASSWORD
+        fromSecret: SENDER_PASSWORD
+      - key: RECEIVER_EMAIL
+        fromSecret: RECEIVER_EMAIL
+      - key: PRODUCT_URL
+        fromSecret: PRODUCT_URL
