@@ -1,56 +1,65 @@
-import os
 import requests
 from bs4 import BeautifulSoup
 import smtplib
 import time
+import os
+from flask import Flask
 
-# Load environment variables for configuration
+# Flask setup to keep a port open
+app = Flask(__name__)
+
+# Environment Variables Setup
 PRODUCT_URL = os.getenv('PRODUCT_URL')
 SENDER_EMAIL = os.getenv('SENDER_EMAIL')
 SENDER_PASSWORD = os.getenv('SENDER_PASSWORD')
 RECEIVER_EMAIL = os.getenv('RECEIVER_EMAIL')
 
-# Check the stock status function
+# Check stock function
 def check_stock():
-    try:
-        headers = {"User-Agent": "Mozilla/5.0"}
-        response = requests.get(PRODUCT_URL, headers=headers)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.content, 'html.parser')
+    headers = {"User-Agent": "Mozilla/5.0"}
+    response = requests.get(PRODUCT_URL, headers=headers)
+    soup = BeautifulSoup(response.content, 'html.parser')
 
-        # Check for availability text
-        if "Add to basket" in soup.text:
-            send_email("商品有存貨！")
-        elif "Notify me when available" in soup.text:
-            print("商品無存貨")
-        else:
-            print("無法判斷商品庫存狀態")
-    except requests.exceptions.RequestException as e:
-        print(f"Failed to fetch product page: {e}")
+    if "Add to basket" in soup.text:
+        send_email("商品有存貨！")
+    elif "Notify me when available" in soup.text:
+        print("商品無存貨")
+    else:
+        print("無法判斷商品庫存狀態")
 
-# Function to send email notifications
+# Send email function
 def send_email(message):
     try:
-        # Set up the SMTP server
         server = smtplib.SMTP('smtp.gmail.com', 587)
         server.starttls()
         server.login(SENDER_EMAIL, SENDER_PASSWORD)
 
-        # Construct the email
         subject = 'Loewe商品通知'
         body = f'{message}\n鏈接：{PRODUCT_URL}'
         msg = f'Subject: {subject}\n\n{body}'
 
-        # Send the email
         server.sendmail(SENDER_EMAIL, RECEIVER_EMAIL, msg)
         print("通知已發送")
 
-        # Close the SMTP server
         server.quit()
     except Exception as e:
         print(f"發送郵件失敗: {e}")
 
-# Main program to check stock every 5 minutes
-while True:
-    check_stock()
-    time.sleep(300)  # Check every 5 minutes
+# Main loop to check stock every 5 minutes
+@app.route('/')
+def index():
+    return "Service is running!"
+
+if __name__ == '__main__':
+    # Start the Flask app to keep the port open
+    from threading import Thread
+
+    # Run the stock checker in a separate thread
+    def stock_checker():
+        while True:
+            check_stock()
+            time.sleep(300)
+
+    # Start the Flask server
+    Thread(target=stock_checker).start()
+    app.run(host='0.0.0.0', port=10000)
