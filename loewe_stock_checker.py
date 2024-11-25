@@ -19,11 +19,15 @@ def check_stock():
     headers = {"User-Agent": "Mozilla/5.0"}
     response = requests.get(PRODUCT_URL, headers=headers)
     soup = BeautifulSoup(response.content, 'html.parser')
+    
+    # Print the whole HTML content for debugging
+    print(soup.prettify())
 
     if "Add to basket" in soup.text:
+        print("Product is in stock!")  # Add print statement to verify
         send_email("商品有存貨！")
     elif "Notify me when available" in soup.text:
-        print("商品無存貨")
+        print("商品無存貨")  # Add print statement to verify
     else:
         print("無法判斷商品庫存狀態")
 
@@ -33,17 +37,17 @@ def send_email(message):
         server = smtplib.SMTP('smtp.gmail.com', 587)
         server.starttls()
         server.login(SENDER_EMAIL, SENDER_PASSWORD)
-
+        
         subject = 'Loewe商品通知'
         body = f'{message}\n鏈接：{PRODUCT_URL}'
         msg = f'Subject: {subject}\n\n{body}'
-
+        
         server.sendmail(SENDER_EMAIL, RECEIVER_EMAIL, msg)
         print("通知已發送")
-
         server.quit()
     except Exception as e:
         print(f"發送郵件失敗: {e}")
+
 
 # Main loop to check stock every 5 minutes
 @app.route('/')
